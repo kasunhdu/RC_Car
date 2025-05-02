@@ -1,0 +1,224 @@
+//receiver_for_car_with_reverse_and_reset_data
+
+#include <SPI.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+#include <Servo.h>
+
+#define enA 3
+#define in1 2
+#define in2 4
+#define butt_1 6
+RF24 radio(7, 8); // CE, CSN
+
+const byte address[6] = "00001";
+Servo kasunServo;
+
+
+struct Data_Package {
+  int Pot_Value1 = 504;
+  int Pot_Value2;
+  byte angleValue2 = 92;
+  byte button1  ;
+  byte button2 = 1 ;
+  
+};
+
+Data_Package data;
+
+int pwm_Value1 =0 ;
+unsigned long  currentTime =0;  
+unsigned long  last_receiveTime = 0;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(enA, OUTPUT);
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+  pinMode(butt_1, OUTPUT);
+  //digitalWrite(butt_1,0);
+  data.button1 = 0;
+  kasunServo.attach(9);
+  radio.begin();
+  radio.openReadingPipe(0, address);
+  radio.setDataRate(RF24_250KBPS);
+  radio.setPALevel(RF24_PA_MIN);
+  radio.startListening();
+}
+
+void loop() {
+ 
+  if (radio.available()) {
+    radio.read(&data, sizeof(Data_Package)); 
+    last_receiveTime = millis();
+  }
+    currentTime = millis();
+
+    if(currentTime - last_receiveTime > 2000){
+      reset_data();
+    }
+  
+    
+
+    Serial.print(data.Pot_Value1);
+    Serial.print("\t");
+    
+    Serial.print(data.Pot_Value2);
+    Serial.print("\t");
+
+    Serial.print(data.angleValue2);
+    Serial.print("\t");
+    Serial.print(data.button1);
+    Serial.print("\t");
+    Serial.print(data.button2);
+    Serial.print("\t");
+
+   //if(data.button2 == 0){    //if you want a break
+    //  car_break();
+   //}
+   // else{
+   
+    if(data.Pot_Value2<340){
+      if(data.Pot_Value1>440){
+      digitalWrite(in1, HIGH);
+      digitalWrite(in2, LOW);
+      
+      pwm_Value1 = map(data.Pot_Value1, 505, 1023, 0, 80);
+
+      if(pwm_Value1<20){
+        pwm_Value1 = 0 ;
+      }
+      
+      analogWrite(enA,pwm_Value1 ); 
+
+    }
+    else if(data.Pot_Value1<500){
+      digitalWrite(in1, LOW);
+      digitalWrite(in2, HIGH);
+      
+      pwm_Value1 = map(data.Pot_Value1, 500, 0, 0, 80);
+
+      if(pwm_Value1<20){
+        pwm_Value1 = 0 ;
+      }
+      analogWrite(enA,pwm_Value1 );
+    }
+    else{
+      digitalWrite(in1, LOW);
+      digitalWrite(in2, LOW);
+      analogWrite(enA,0 );
+    }
+    
+
+    
+    
+    kasunServo.write(data.angleValue2);
+    
+      
+    }
+    else if(data.Pot_Value2<680){
+      if(data.Pot_Value1>440){
+      digitalWrite(in1, HIGH);
+      digitalWrite(in2, LOW);
+      
+      pwm_Value1 = map(data.Pot_Value1, 505, 1023, 0, 120);
+
+      if(pwm_Value1<20){
+        pwm_Value1 = 0 ;
+      }
+      
+      analogWrite(enA,pwm_Value1 ); 
+
+    }
+    else if(data.Pot_Value1<500){
+      digitalWrite(in1, LOW);
+      digitalWrite(in2, HIGH);
+      
+      pwm_Value1 = map(data.Pot_Value1, 500, 0, 0, 100);
+
+      if(pwm_Value1<20){
+        pwm_Value1 = 0 ;
+      }
+      analogWrite(enA,pwm_Value1 );
+    }
+    else{
+      digitalWrite(in1, LOW);
+      digitalWrite(in2, LOW);
+      analogWrite(enA,0 );
+    }
+    
+
+    
+    
+    kasunServo.write(data.angleValue2);
+    
+    }
+    else if(data.Pot_Value2 > 680){
+      if(data.Pot_Value1>440){
+      digitalWrite(in1, HIGH);
+      digitalWrite(in2, LOW);
+      
+      pwm_Value1 = map(data.Pot_Value1, 505, 1023, 0, 220);
+
+      if(pwm_Value1<20){
+        pwm_Value1 = 0 ;
+      }
+      
+      analogWrite(enA,pwm_Value1 ); 
+
+    }
+    else if(data.Pot_Value1<500){
+      digitalWrite(in1, LOW);
+      digitalWrite(in2, HIGH);
+      
+      pwm_Value1 = map(data.Pot_Value1, 500, 0, 0, 200);
+
+      if(pwm_Value1<20){
+        pwm_Value1 = 0 ;
+      }
+      analogWrite(enA,pwm_Value1 );
+    }
+    else{
+      digitalWrite(in1, LOW);
+      digitalWrite(in2, LOW);
+      analogWrite(enA,0 );
+    }
+    
+
+    
+    
+    kasunServo.write(data.angleValue2);
+    
+      
+    }
+    //  }
+    
+    Serial.println(pwm_Value1);
+    
+    
+    if(data.button1 == 0){
+      analogWrite(butt_1,255);
+    }
+    else if(data.button1 == 1){
+      digitalWrite(butt_1,0);
+    }
+    
+}
+void car_break(){
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);
+  analogWrite(enA,80 );
+  delay(10);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  analogWrite(enA,80 );
+  
+}
+
+void reset_data(){
+  data.Pot_Value1 = 504;
+  data.Pot_Value2 = 0;
+  data.angleValue2 = 92;
+  data.button1 = 1;
+  data.button2 =1 ;
+}
