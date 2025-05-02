@@ -1,3 +1,7 @@
+// Arduino set_AREF_3.3
+//transmeter_for_car_with_reverse_and_reset_data
+
+
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
@@ -33,7 +37,7 @@ void setup() {
 
    data.Pot_Value1 = 0;
    data.angleValue2 = 92;
-   //data.button1 = 0;
+ 
 }
 
 void loop() {
@@ -44,7 +48,7 @@ void loop() {
   data.button2 = digitalRead(3);
   
   servo_value = Pot_Value3 * 0.00097752;
-  //servo_value2 = Pot_Value_steering * servo_value;
+
   
   data.angleValue2 = map(Pot_Value_steering, 0, 1023, 52, 132);
   radio.write(&data, sizeof(Data_Package));
