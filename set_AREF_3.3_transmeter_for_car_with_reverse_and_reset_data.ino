@@ -1,0 +1,79 @@
+#include <SPI.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+
+RF24 radio(7, 8); // CE, CSN
+
+const byte address[6] = "00001";
+
+int Pot_Value1 = 0, Pot_Value_steering ,button1_state , Pot_Value3;
+float servo_value , servo_value2;
+// Max size of this struct is 32 bytes 
+struct Data_Package {
+  int Pot_Value1;
+  int Pot_Value2;
+  byte angleValue2 = 90;
+  byte button1;
+  byte button2;
+};
+
+Data_Package data; // Create a variable with the above structure
+
+void setup() {
+  Serial.begin(9600);
+  analogReference(EXTERNAL);
+  pinMode(2,INPUT_PULLUP);
+  pinMode(3,INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(2),Button1,RISING);
+  radio.begin();
+  radio.openWritingPipe(address);
+  radio.setDataRate(RF24_250KBPS);
+  radio.setPALevel(RF24_PA_MIN);
+  radio.stopListening();
+
+   data.Pot_Value1 = 0;
+   data.angleValue2 = 92;
+   //data.button1 = 0;
+}
+
+void loop() {
+  data.Pot_Value1 = analogRead(A0);
+  Pot_Value_steering = analogRead(A2);
+  Pot_Value3 = analogRead(A5);
+  data.Pot_Value2 = analogRead(A4);
+  data.button2 = digitalRead(3);
+  
+  servo_value = Pot_Value3 * 0.00097752;
+  //servo_value2 = Pot_Value_steering * servo_value;
+  
+  data.angleValue2 = map(Pot_Value_steering, 0, 1023, 52, 132);
+  radio.write(&data, sizeof(Data_Package));
+  Serial.print(data.button1);
+  Serial.print("\t");
+  Serial.print(data.button2);
+  Serial.print("\t");
+  Serial.print(data.Pot_Value1);
+  Serial.print("\t");
+  Serial.print(data.Pot_Value2);
+  Serial.print("\t");
+  Serial.print(Pot_Value_steering);
+  Serial.print("\t");
+  Serial.print(servo_value);
+  Serial.print("\t");
+  Serial.print(servo_value2);
+  Serial.print("\t");
+  Serial.print(Pot_Value3);
+  Serial.print("\t");
+  Serial.println(data.angleValue2);
+}
+ void Button1(){
+  button1_state = digitalRead(2);
+  
+  if(button1_state != data.button1 ){
+    data.button1 = 1;
+  }
+  else{
+    data.button1 = 0;
+  }
+ }
+  
